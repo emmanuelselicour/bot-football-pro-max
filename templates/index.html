@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>GPT-Bet.Foot</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .container { background: #f5f5f5; padding: 20px; border-radius: 10px; }
+        textarea { width: 100%; height: 200px; margin: 10px 0; }
+        button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; }
+        .result { margin-top: 20px; padding: 15px; border-radius: 5px; }
+        .bet { background: #d4edda; }
+        .no-bet { background: #f8d7da; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 GPT-Bet.Foot</h1>
+        
+        <form id="analyzeForm">
+            <textarea id="textData" placeholder="PSG vs Lorient
+2.10 3.40 3.60
+xg_psg: 2.3
+xg_lorient: 0.9
+classement_psg: 1
+classement_lorient: 16
+forme_psg: ★★★★☆
+forme_lorient: ★★☆☆☆"></textarea>
+            <br>
+            <button type="submit">Analyser le Match</button>
+        </form>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        document.getElementById('analyzeForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            formData.append('text_data', document.getElementById('textData').value);
+            
+            try {
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                let html = '';
+                if (result.action === 'BET') {
+                    html = `<div class="result bet">
+                        <h3>✅ PARI RECOMMANDÉ</h3>
+                        <p><strong>${result.match}</strong></p>
+                        <p>Pari: ${result.bet} @${result.odds}</p>
+                        <p>Edge: +${result.edge}% | Mise: ${result.stake}€</p>
+                    </div>`;
+                } else {
+                    html = `<div class="result no-bet">
+                        <h3>❌ PAS DE PARI</h3>
+                        <p>Edge maximum: ${result.max_edge}%</p>
+                    </div>`;
+                }
+                
+                document.getElementById('result').innerHTML = html;
+                
+            } catch (error) {
+                document.getElementById('result').innerHTML = '<div class="result no-bet">Erreur: ' + error + '</div>';
+            }
+        });
+    </script>
+</body>
+</html>
