@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bot de Paris Football Génial | Système IA Avancé</title>
+    <style>
+        :root {
+            --primary: #1a1f36;
+            --secondary: #252b42;
+            --accent: #00d4aa;
+            --danger: #ff4757;
+            --warning: #ffa502;
+            --success: #2ed573;
+            --text: #ffffff;
+            --text-secondary: #a0a4b8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--primary);
+            color: var(--text);
+            overflow-x: hidden;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            grid-template-rows: 70px 1fr;
+            grid-template-areas: 
+                "sidebar header"
+                "sidebar main";
+            height: 100vh;
+        }
+
+        /* Header Styles */
+        header {
+            grid-area: header;
+            background-color: var(--secondary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, var(--accent), #00a8ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background-color: rgba(0, 212, 170, 0.1);
+            padding: 8px 15px;
+            border-radius: 20px;
+            border: 1px solid var(--accent);
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            grid-area: sidebar;
+            background-color: var(--secondary);
+            padding: 20px 0;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-section {
+            margin-bottom: 30px;
+        }
+
+        .nav-title {
+            padding: 0 20px 10px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px 20px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background-color: rgba(0, 212, 170, 0.1);
+            color: var(--accent);
+            border-left: 3px solid var(--accent);
+        }
+
+        .nav-item i {
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Main Content Styles */
+        main {
+            grid-area: main;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background-color: var(--secondary);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .card-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin: 10px 0;
+        }
+
+        .card-positive {
+            color: var(--success);
+        }
+
+        .card-negative {
+            color: var(--danger);
+        }
+
+        .card-neutral {
+            color: var(--text-secondary);
+        }
+
+        .progress-bar {
+            height: 6px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: var(--accent);
+            border-radius: 3px;
+        }
+
+        .matches-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .match-card {
+            background-color: var(--secondary);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: transform 0.3s ease;
+            position: relative;
+        }
+
+        .match-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent);
+        }
+
+        .match-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .match-league {
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .match-time {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .match-teams {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 15px 0;
+        }
+
+        .team {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 40%;
+            position: relative;
+        }
+
+        .team-logo {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .team-name {
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        .favorite-indicator {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background-color: var(--accent);
+            color: var(--primary);
+            font-size: 0.7rem;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+
+        .vs {
+            font-weight: 700;
+            color: var(--text-secondary);
+        }
+
+        .odds-container {
+            display: flex;
+            justify-content: space-between;
+            margin: 15px 0;
+        }
+
+        .odd {
+            background-color: rgba(255, 255, 255, 0.05);
+            padding: 8px 15px;
+            border-radius: 5px;
+            text-align: center;
+            flex: 1;
+            margin: 0 5px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .odd:hover {
+            background-color: var(--accent);
+            color: var(--primary);
+        }
+
+        .odd.recommended {
+            background-color: rgba(0, 212, 170, 0.2);
+            border: 1px solid var(--accent);
+        }
+
+        .odd-value {
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .odd-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .ai-recommendation {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: rgba(0, 212, 170, 0.1);
+            border-left: 3px solid var(--accent);
+        }
+
+        .confidence-meter {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .confidence-bar {
+            flex: 1;
+            height: 6px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background-color: var(--success);
+            border-radius: 3px;
+        }
+
+        .alert-high {
+            border-left: 3px solid var(--success);
+        }
+
+        .alert-medium {
+            border-left: 3px solid var(--warning);
+        }
+
+        .alert-low {
+            border-left: 3px solid var(--danger);
+        }
+
+        .bet-controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+        }
+
+        .btn {
+            padding: 8px 15px;
+            border-radius: 5px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background-color: var(--accent);
+            color: var(--primary);
+        }
+
+        .btn-secondary {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--text);
+        }
+
+        .btn-primary:hover {
+            background-color: #00c299;
+        }
+
+        .btn-secondary:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .chart-container {
+            height: 200px;
+            margin-top: 15px;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+                grid-template-areas: 
+                    "header"
+                    "main";
+            }
+            
+            .sidebar {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <h1>Bot de Paris Football Génial</h1>
+            </div>
+            <div class="status-indicator">
+                <div class="status-dot"></div>
+                <span>Système IA Actif - Trading en temps réel</span>
+            </div>
+        </header>
+
+        <aside class="sidebar">
+            <div class="nav-section">
+                <div class="nav-title">Tableau de bord</div>
+                <a href="#" class="nav-item active">
+                    <i>📊</i> Vue d'ensemble
+                </a>
+                <a href="#" class="nav-item">
+                    <i>⚽</i> Matchs en direct
+                </a>
+                <a href="#" class="nav-item">
+                    <i>💰</i> Gestion Bankroll
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-title">Stratégies</div>
+                <a href="#" class="nav-item">
+                    <i>🎯</i> Value Bet Pro
+                </a>
+                <a href="#" class="nav-item">
+                    <i>🔍</i> Surebet Hunter
+                </a>
+                <a href="#" class="nav-item">
+                    <i>⚡</i> Trading In-Play
+                </a>
+                <a href="#" class="nav-item">
+                    <i>👥</i> Copytrading
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-title">Analyses</div>
+                <a href="#" class="nav-item">
+                    <i>📈</i> Performances
+                </a>
+                <a href="#" class="nav-item">
+                    <i>📋</i> Historique
+                </a>
+                <a href="#" class="nav-item">
+                    <i>🔔</i> Alertes
+                </a>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-title">Paramètres</div>
+                <a href="#" class="nav-item">
+                    <i>⚙️</i> Configuration
+                </a>
+                <a href="#" class="nav-item">
+                    <i>🔒</i> Sécurité
+                </a>
+                <a href="#" class="nav-item">
+                    <i>❓</i> Aide & Support
+                </a>
+            </div>
+        </aside>
+
+        <main>
+            <div class="dashboard-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Bankroll</div>
+                        <div class="card-positive">+5.2%</div>
+                    </div>
+                    <div class="card-value">€12,450</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 78%"></div>
+                    </div>
+                    <div class="card-neutral">Objectif: €16,000</div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Paris du jour</div>
+                        <div class="card-positive">+€342</div>
+                    </div>
+                    <div class="card-value">14/18</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 77%"></div>
+                    </div>
+                    <div class="card-neutral">Taux de réussite: 77.8%</div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">Value Bets détectés</div>
+                        <div class="card-positive">3</div>
+                    </div>
+                    <div class="card-value">12</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 60%"></div>
+                    </div>
+                    <div class="card-neutral">Analysés aujourd'hui: 20</div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">SureBets actives</div>
+                        <div class="card-positive">2</div>
+                    </div>
+                    <div class="card-value">4.7%</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 47%"></div>
+                    </div>
+                    <div class="card-neutral">Rendement moyen</div>
+                </div>
+            </div>
+
+            <h2 style="margin-bottom: 20px;">Matchs recommandés par l'IA</h2>
+            <div class="matches-container" id="matchesContainer">
+                <!-- Les matchs seront générés dynamiquement par JavaScript -->
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Module principal du bot de paris
+        class FootBotCore {
+            constructor() {
+                this.apiKey = "6742012865:AAEPLQN_mianrxvljmdx6dStwb_iOS3rAQU";
+                this.bankroll = 12450;
+                this.matches = [];
+                this.init();
+            }
+
+            init() {
+                console.log("🚀 Initialisation du Bot de Paris Football Génial...");
+                this.generateMatches();
+                this.renderMatches();
+                this.startRealTimeUpdates();
+            }
+
+            // Génération de matchs simulés avec analyse IA
+            generateMatches() {
+                const teams = [
+                    { name: "Paris Saint-Germain", strength: 92 },
+                    { name: "Olympique de Marseille", strength: 85 },
+                    { name: "AS Monaco", strength: 82 },
+                    { name: "Olympique Lyonnais", strength: 80 },
+                    { name: "LOSC Lille", strength: 78 },
+                    { name: "Stade Rennais", strength: 77 },
+                    { name: "OGC Nice", strength: 76 },
+                    { name: "RC Lens", strength: 75 }
+                ];
+
+                const leagues = ["Ligue 1", "Premier League", "La Liga", "Serie A", "Bundesliga"];
+                
+                this.matches = [];
+                
+                for (let i = 0; i < 6; i++) {
+                    const homeTeam = teams[Math.floor(Math.random() * teams.length)];
+                    let awayTeam;
+                    do {
+                        awayTeam = teams[Math.floor(Math.random() * teams.length)];
+                    } while (homeTeam.name === awayTeam.name);
+                    
+                    const league = leagues[Math.floor(Math.random() * leagues.length)];
+                    
+                    // Calcul des probabilités basées sur la force des équipes
+                    const homeStrength = homeTeam.strength;
+                    const awayStrength = awayTeam.strength;
+                    const totalStrength = homeStrength + awayStrength;
+                    
+                    const homeWinProb = (homeStrength / totalStrength) * 0.45 + 0.25;
+                    const drawProb = 0.25;
+                    const awayWinProb = (awayStrength / totalStrength) * 0.45 + 0.25;
+                    
+                    // Normalisation des probabilités
+                    const totalProb = homeWinProb + drawProb + awayWinProb;
+                    const normalizedHomeProb = homeWinProb / totalProb;
+                    const normalizedDrawProb = drawProb / totalProb;
+                    const normalizedAwayProb = awayWinProb / totalProb;
+                    
+                    // Calcul des cotes "réelles"
+                    const homeOddsReal = (1 / normalizedHomeProb).toFixed(2);
+                    const drawOddsReal = (1 / normalizedDrawProb).toFixed(2);
+                    const awayOddsReal = (1 / normalizedAwayProb).toFixed(2);
+                    
+                    // Cotes du bookmaker avec marge
+                    const margin = 1.05; // Marge de 5%
+                    const homeOddsBook = (homeOddsReal * margin).toFixed(2);
+                    const drawOddsBook = (drawOddsReal * margin).toFixed(2);
+                    const awayOddsBook = (awayOddsReal * margin).toFixed(2);
+                    
+                    // Détermination du favori
+                    let favorite = "";
+                    let favoritePercentage = 0;
+                    
+                    if (normalizedHomeProb > normalizedAwayProb && normalizedHomeProb > normalizedDrawProb) {
+                        favorite = "home";
+                        favoritePercentage = (normalizedHomeProb * 100).toFixed(1);
+                    } else if (normalizedAwayProb > normalizedHomeProb && normalizedAwayProb > normalizedDrawProb) {
+                        favorite = "away";
+                        favoritePercentage = (normalizedAwayProb * 100).toFixed(1);
+                    } else {
+                        favorite = "draw";
+                        favoritePercentage = (normalizedDrawProb * 100).toFixed(1);
+                    }
+                    
+                    // Détection de value bet
+                    let valueBet = null;
+                    let valueConfidence = 0;
+                    
+                    if (homeOddsBook > homeOddsReal * 1.1) {
+                        valueBet = "1";
+                        valueConfidence = ((homeOddsBook - homeOddsReal) / homeOddsReal * 100).toFixed(1);
+                    } else if (drawOddsBook > drawOddsReal * 1.1) {
+                        valueBet = "N";
+                        valueConfidence = ((drawOddsBook - drawOddsReal) / drawOddsReal * 100).toFixed(1);
+                    } else if (awayOddsBook > awayOddsReal * 1.1) {
+                        valueBet = "2";
+                        valueConfidence = ((awayOddsBook - awayOddsReal) / awayOddsReal * 100).toFixed(1);
+                    }
+                    
+                    // Recommandation IA
+                    let aiRecommendation = "Analyse en cours...";
+                    let confidence = Math.random() * 40 + 60; // 60-100%
+                    
+                    if (valueBet) {
+                        aiRecommendation = `VALUE BET DÉTECTÉ: ${valueBet} (${valueConfidence}% de valeur)`;
+                    } else if (homeStrength - awayStrength > 10) {
+                        aiRecommendation = "Victoire domicile probable";
+                    } else if (awayStrength - homeStrength > 10) {
+                        aiRecommendation = "Victoire extérieur probable";
+                    } else {
+                        aiRecommendation = "Match serré, parier avec prudence";
+                    }
+                    
+                    this.matches.push({
+                        id: i + 1,
+                        homeTeam: homeTeam.name,
+                        awayTeam: awayTeam.name,
+                        league: league,
+                        time: this.generateRandomTime(),
+                        homeOdds: homeOddsBook,
+                        drawOdds: drawOddsBook,
+                        awayOdds: awayOddsBook,
+                        favorite: favorite,
+                        favoritePercentage: favoritePercentage,
+                        valueBet: valueBet,
+                        valueConfidence: valueConfidence,
+                        aiRecommendation: aiRecommendation,
+                        confidence: confidence.toFixed(1),
+                        alertLevel: confidence > 80 ? "high" : confidence > 65 ? "medium" : "low"
+                    });
+                }
+            }
+
+            generateRandomTime() {
+                const hours = Math.floor(Math.random() * 4) + 19; // 19h-22h
+                const minutes = Math.floor(Math.random() * 60);
+                return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+            }
+
+            // Rendu des matchs dans l'interface
+            renderMatches() {
+                const container = document.getElementById('matchesContainer');
+                container.innerHTML = '';
+                
+                this.matches.forEach(match => {
+                    const matchCard = document.createElement('div');
+                    matchCard.className = `match-card alert-${match.alertLevel}`;
+                    
+                    // Déterminer la cote recommandée
+                    let recommendedOdd = "";
+                    if (match.valueBet === "1") recommendedOdd = "home";
+                    else if (match.valueBet === "N") recommendedOdd = "draw";
+                    else if (match.valueBet === "2") recommendedOdd = "away";
+                    
+                    matchCard.innerHTML = `
+                        <div class="match-header">
+                            <div class="match-league">${match.league}</div>
+                            <div class="match-time">${match.time}</div>
+                        </div>
+                        <div class="match-teams">
+                            <div class="team">
+                                <div class="team-logo">${match.homeTeam.substring(0, 2)}</div>
+                                <div class="team-name">${match.homeTeam}</div>
+                                ${match.favorite === 'home' ? `<div class="favorite-indicator">${match.favoritePercentage}%</div>` : ''}
+                            </div>
+                            <div class="vs">VS</div>
+                            <div class="team">
+                                <div class="team-logo">${match.awayTeam.substring(0, 2)}</div>
+                                <div class="team-name">${match.awayTeam}</div>
+                                ${match.favorite === 'away' ? `<div class="favorite-indicator">${match.favoritePercentage}%</div>` : ''}
+                            </div>
+                        </div>
+                        <div class="odds-container">
+                            <div class="odd ${recommendedOdd === 'home' ? 'recommended' : ''}">
+                                <div class="odd-value">${match.homeOdds}</div>
+                                <div class="odd-label">Victoire ${match.homeTeam.substring(0, 3)}</div>
+                                ${match.favorite === 'home' ? `<div class="favorite-indicator" style="position: absolute; top: -8px; right: -8px;">${match.favoritePercentage}%</div>` : ''}
+                            </div>
+                            <div class="odd ${recommendedOdd === 'draw' ? 'recommended' : ''}">
+                                <div class="odd-value">${match.drawOdds}</div>
+                                <div class="odd-label">Match nul</div>
+                                ${match.favorite === 'draw' ? `<div class="favorite-indicator" style="position: absolute; top: -8px; right: -8px;">${match.favoritePercentage}%</div>` : ''}
+                            </div>
+                            <div class="odd ${recommendedOdd === 'away' ? 'recommended' : ''}">
+                                <div class="odd-value">${match.awayOdds}</div>
+                                <div class="odd-label">Victoire ${match.awayTeam.substring(0, 3)}</div>
+                                ${match.favorite === 'away' ? `<div class="favorite-indicator" style="position: absolute; top: -8px; right: -8px;">${match.favoritePercentage}%</div>` : ''}
+                            </div>
+                        </div>
+                        <div class="ai-recommendation">
+                            <div>🤖</div>
+                            <div>${match.aiRecommendation}</div>
+                        </div>
+                        <div class="confidence-meter">
+                            <div>Confiance IA:</div>
+                            <div class="confidence-bar">
+                                <div class="confidence-fill" style="width: ${match.confidence}%"></div>
+                            </div>
+                            <div>${match.confidence}%</div>
+                        </div>
+                        <div class="bet-controls">
+                            <button class="btn btn-secondary">Analyser</button>
+                            <button class="btn btn-primary">Parier IA</button>
+                        </div>
+                    `;
+                    
+                    container.appendChild(matchCard);
+                });
+            }
+
+            // Simulation des mises à jour en temps réel
+            startRealTimeUpdates() {
+                setInterval(() => {
+                    this.updateOdds();
+                    this.renderMatches();
+                }, 10000); // Mise à jour toutes les 10 secondes
+            }
+
+            // Mise à jour aléatoire des cotes
+            updateOdds() {
+                this.matches.forEach(match => {
+                    // Variation aléatoire des cotes (±5%)
+                    const variation = (Math.random() * 0.1) - 0.05;
+                    
+                    match.homeOdds = (parseFloat(match.homeOdds) * (1 + variation)).toFixed(2);
+                    match.drawOdds = (parseFloat(match.drawOdds) * (1 + variation)).toFixed(2);
+                    match.awayOdds = (parseFloat(match.awayOdds) * (1 + variation)).toFixed(2);
+                    
+                    // Mise à jour occasionnelle des recommandations
+                    if (Math.random() < 0.2) {
+                        const recommendations = [
+                            "Analyse approfondie en cours...",
+                            "Données météo intégrées",
+                            "Composition d'équipe analysée",
+                            "Forme récente évaluée",
+                            "Facteurs motivationnels considérés"
+                        ];
+                        match.aiRecommendation = recommendations[Math.floor(Math.random() * recommendations.length)];
+                    }
+                });
+            }
+
+            // Méthode Kelly pour la gestion de bankroll
+            calculateKellyStake(probability, odds, bankrollFraction = 0.1) {
+                const b = odds - 1;
+                const q = 1 - probability;
+                const kellyFraction = (probability * b - q) / b;
+                return Math.max(0, kellyFraction * bankrollFraction * this.bankroll);
+            }
+
+            // Simulation de l'analyse OpenAI
+            async analyzeWithOpenAI(matchData) {
+                // Simulation de l'appel à l'API OpenAI
+                // En production, cette fonction appellerait l'API réelle
+                return new Promise(resolve => {
+                    setTimeout(() => {
+                        const analysis = {
+                            prediction: Math.random() > 0.5 ? "Victoire domicile" : "Victoire extérieur",
+                            confidence: Math.random() * 30 + 70, // 70-100%
+                            factors: ["Forme récente", "Blessures", "Motivation", "Conditions météo"],
+                            recommendedBet: Math.random() > 0.3 ? "1" : Math.random() > 0.5 ? "N" : "2",
+                            stakePercentage: (Math.random() * 5 + 2).toFixed(1) // 2-7%
+                        };
+                        resolve(analysis);
+                    }, 1000);
+                });
+            }
+        }
+
+        // Initialisation du bot au chargement de la page
+        document.addEventListener('DOMContentLoaded', () => {
+            const bot = new FootBotCore();
+            
+            // Simulation des interactions utilisateur
+            document.querySelectorAll('.btn-primary').forEach(button => {
+                button.addEventListener('click', function() {
+                    const matchCard = this.closest('.match-card');
+                    const teamNames = matchCard.querySelectorAll('.team-name');
+                    const homeTeam = teamNames[0].textContent;
+                    const awayTeam = teamNames[1].textContent;
+                    
+                    alert(`Pari IA placé sur ${homeTeam} vs ${awayTeam}\nMontant: €${(Math.random() * 100 + 50).toFixed(2)}\nConfiance: ${(Math.random() * 30 + 70).toFixed(1)}%`);
+                });
+            });
+        });
+    </script>
+</body>
+</html>
