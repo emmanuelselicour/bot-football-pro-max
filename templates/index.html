@@ -3,22 +3,27 @@
 <head>
     <title>GPT-Bet.Foot</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background: #f5f5f5; }
-        .container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        h1 { color: #2c3e50; text-align: center; }
-        textarea { width: 100%; height: 200px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin: 10px 0; }
-        button { background: #3498db; color: white; padding: 12px 30px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
-        button:hover { background: #2980b9; }
-        .result { margin-top: 20px; padding: 20px; border-radius: 5px; }
-        .bet { background: #d4edda; border: 1px solid #c3e6cb; }
-        .no-bet { background: #f8d7da; border: 1px solid #f5c6cb; }
-        .stats { background: #d1ecf1; padding: 15px; border-radius: 5px; margin-top: 20px; }
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background: #f0f2f5; }
+        .container { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; text-align: center; margin-bottom: 10px; }
+        .subtitle { text-align: center; color: #7f8c8d; margin-bottom: 30px; }
+        textarea { width: 100%; height: 200px; padding: 15px; border: 2px solid #e9ecef; border-radius: 8px; margin: 15px 0; font-family: monospace; }
+        button { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 40px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; }
+        button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        .result { margin-top: 25px; padding: 25px; border-radius: 10px; }
+        .bet { background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); border: 2px solid #28a745; }
+        .no-bet { background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%); border: 2px solid #dc3545; }
+        .stats { background: #e8f4f8; padding: 20px; border-radius: 10px; margin-top: 25px; }
+        .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 15px; }
+        .stat-card { background: white; padding: 15px; border-radius: 8px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .stat-value { font-size: 1.5em; font-weight: bold; color: #2c3e50; }
+        .stat-label { color: #7f8c8d; font-size: 0.9em; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🎯 GPT-Bet.Foot</h1>
-        <p>Analyse quantitative de matchs de football avec IA</p>
+        <p class="subtitle">Intelligence Artificielle pour l'Analyse Quantitative des Paris Sportifs</p>
         
         <form id="analyzeForm">
             <textarea id="textData" placeholder="Exemple:
@@ -35,15 +40,21 @@ forme_lorient: ★★☆☆☆"></textarea>
         </form>
         
         <div id="result"></div>
+        
         <div id="stats" class="stats" style="display: none;">
-            <h3>📊 Statistiques</h3>
-            <div id="statsContent"></div>
+            <h3>📊 Statistiques de Performance</h3>
+            <div class="stat-grid" id="statsContent"></div>
         </div>
     </div>
 
     <script>
         document.getElementById('analyzeForm').addEventListener('submit', async function(e) {
             e.preventDefault();
+            
+            const button = this.querySelector('button');
+            const originalText = button.textContent;
+            button.textContent = 'Analyse en cours...';
+            button.disabled = true;
             
             const formData = new FormData();
             formData.append('text_data', document.getElementById('textData').value);
@@ -60,27 +71,42 @@ forme_lorient: ★★☆☆☆"></textarea>
                 if (result.action === 'BET') {
                     html = `<div class="result bet">
                         <h3>✅ PARI RECOMMANDÉ</h3>
-                        <p><strong>${result.match}</strong></p>
-                        <p>Pari: <strong>${result.bet} @${result.odds}</strong></p>
-                        <p>Edge: <strong style="color: #27ae60;">+${result.edge}%</strong></p>
-                        <p>Mise recommandée: <strong>${result.stake}€</strong> (${result.stake_percent}% de la bankroll)</p>
-                        <p>Cote Fair: ${result.fair_odds} | Confiance: ${Math.round(result.confidence * 100)}%</p>
+                        <div class="stat-grid">
+                            <div class="stat-card">
+                                <div class="stat-value">${result.match}</div>
+                                <div class="stat-label">Match</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">${result.bet} @${result.odds}</div>
+                                <div class="stat-label">Pari & Cote</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value" style="color: #27ae60;">+${result.edge}%</div>
+                                <div class="stat-label">Edge</div>
+                            </div>
+                        </div>
+                        <div style="margin-top: 15px;">
+                            <p><strong>Mise recommandée:</strong> ${result.stake}€ (${result.stake_percent}% de la bankroll)</p>
+                            <p><strong>Cote Fair:</strong> ${result.fair_odds} | <strong>Confiance:</strong> ${Math.round(result.confidence * 100)}%</p>
+                        </div>
                     </div>`;
                 } else {
                     html = `<div class="result no-bet">
                         <h3>❌ PAS DE PARI</h3>
-                        <p>Edge maximum détecté: ${result.max_edge}% (seuil minimum: 3%)</p>
+                        <p>Edge maximum détecté: <strong>${result.max_edge}%</strong> (seuil minimum: 3%)</p>
+                        <p>Aucune valeur betting identifiée sur ce match.</p>
                     </div>`;
                 }
                 
                 document.getElementById('result').innerHTML = html;
-                
-                // Mettre à jour les stats
                 updateStats();
                 
             } catch (error) {
                 document.getElementById('result').innerHTML = 
-                    '<div class="result no-bet">Erreur: ' + error.message + '</div>';
+                    '<div class="result no-bet">Erreur de connexion: ' + error.message + '</div>';
+            } finally {
+                button.textContent = originalText;
+                button.disabled = false;
             }
         });
 
@@ -90,9 +116,18 @@ forme_lorient: ★★☆☆☆"></textarea>
                 const stats = await response.json();
                 
                 document.getElementById('statsContent').innerHTML = `
-                    <p>Total Paris: ${stats.total_trades}</p>
-                    <p>Taux de Réussite: ${stats.win_rate}%</p>
-                    <p>Bankroll: ${stats.bankroll}€</p>
+                    <div class="stat-card">
+                        <div class="stat-value">${stats.total_trades}</div>
+                        <div class="stat-label">Total Paris</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${stats.win_rate}%</div>
+                        <div class="stat-label">Taux de Réussite</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${stats.bankroll}€</div>
+                        <div class="stat-label">Bankroll</div>
+                    </div>
                 `;
                 document.getElementById('stats').style.display = 'block';
             } catch (error) {
