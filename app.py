@@ -1,17 +1,11 @@
 from flask import Flask, render_template, request, jsonify
 import openai
-import pandas as pd
-import numpy as np
 import json
 import base64
-import io
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
+import random
 from datetime import datetime
 import re
 import os
-import random
 
 app = Flask(__name__)
 
@@ -35,6 +29,7 @@ class GPTBetFoot:
     
     def calculate_fair_odds(self, data):
         try:
+            # Extraire données avec valeurs par défaut
             xg_home = float(data['xg'][0][1]) if data['xg'] else 1.5
             xg_away = float(data['xg'][1][1]) if len(data['xg']) > 1 else 1.0
             
@@ -44,21 +39,25 @@ class GPTBetFoot:
             form_home = data['form'][0][1].count('★') * 0.2 if data['form'] else 0.6
             form_away = data['form'][1][1].count('★') * 0.2 if len(data['form']) > 1 else 0.4
             
+            # Calcul du score
             delta_xg = xg_home - xg_away
             delta_rank = (20 - rank_home) - (20 - rank_away)
             delta_form = form_home - form_away
             
             score = 0.3 * delta_xg + 0.2 * delta_rank + 0.1 * delta_form
             
-            p_home = 1 / (1 + np.exp(-score))
+            # Probabilités logistiques
+            p_home = 1 / (1 + 2.71828 ** (-score))  # exp(-score)
             p_draw = 0.25 * (1 - abs(p_home - (1 - p_home)))
             p_away = 1 - p_home - p_draw
             
+            # Normalisation
             total = p_home + p_draw + p_away
             p_home /= total
             p_draw /= total 
             p_away /= total
             
+            # Cotes fair avec marge 5.5%
             margin = 0.945
             fair_odds = {
                 'home': round(1 / (p_home * margin), 2),
@@ -67,7 +66,11 @@ class GPTBetFoot:
             }
             
             return {
-                'probabilities': {'home': p_home, 'draw': p_draw, 'away': p_away},
+                'probabilities': {
+                    'home': round(p_home, 3),
+                    'draw': round(p_draw, 3),
+                    'away': round(p_away, 3)
+                },
                 'fair_odds': fair_odds,
                 'confidence': min(0.95, abs(score) * 2)
             }
@@ -77,6 +80,7 @@ class GPTBetFoot:
     def analyze_match(self, text_content):
         data = self.parse_text_content(text_content)
         
+        # Extraire cotes bookmaker
         odds = data['odds'][0] if data['odds'] else ['2.10', '3.40', '3.60']
         book_odds = {
             'odds_home': float(odds[0]),
@@ -84,27 +88,33 @@ class GPTBetFoot:
             'odds_away': float(odds[2])
         }
         
+        # Calcul cotes fair
         fair_data = self.calculate_fair_odds(data)
         if 'error' in fair_data:
             return fair_data
         
+        # Calcul edges
         edges = {}
         for market in ['home', 'draw', 'away']:
-            if fair_data['fair_odds'][market] > book_odds[f'odds_{market}']:
-                edge = (fair_data['fair_odds'][market] - book_odds[f'odds_{market}']) / book_odds[f'odds_{market}']
+            fair_odd = fair_data['fair_odds'][market]
+            book_odd = book_odds[f'odds_{market}']
+            
+            if fair_odd > book_odd:
+                edge = (fair_odd - book_odd) / book_odd
                 edges[market] = round(edge * 100, 2)
             else:
                 edges[market] = 0.0
         
+        # Trouver meilleur edge
         if edges:
             best_market = max(edges.items(), key=lambda x: x[1])
             
-            if best_market[1] >= 3.0:
+            if best_market[1] >= 3.0:  # Seuil edge 3%
                 # Calcul mise Kelly simplifié
                 fair_prob = fair_data['probabilities'][best_market[0]]
                 edge_decimal = best_market[1] / 100
                 kelly_frac = edge_decimal / (book_odds[f'odds_{best_market[0]}'] - 1)
-                kelly_frac = min(kelly_frac * 0.25, 0.05)
+                kelly_frac = min(kelly_frac * 0.25, 0.05)  # Kelly fractionné
                 stake = self.bankroll * kelly_frac
                 
                 team_names = data['teams'][0] if data['teams'] else ('Home', 'Away')
@@ -116,6 +126,7 @@ class GPTBetFoot:
                     'fair_odds': fair_data['fair_odds'][best_market[0]],
                     'edge': best_market[1],
                     'stake': round(stake, 2),
+                    'stake_percent': round((stake / self.bankroll) * 100, 2),
                     'confidence': round(fair_data['confidence'], 2),
                     'probabilities': fair_data['probabilities'],
                     'action': 'BET'
@@ -130,6 +141,7 @@ class GPTBetFoot:
     def simulate_trade(self, recommendation):
         trade_id = f"TRADE_{len(self.trades) + 1:04d}"
         
+        # Simulation avec 55% de win rate
         win = random.random() < 0.55
         
         if win:
@@ -151,6 +163,21 @@ class GPTBetFoot:
         trade['bankroll_after'] = round(self.bankroll, 2)
         self.trades.append(trade)
         return trade
+
+    def get_performance(self):
+        if not self.trades:
+            return {'total_trades': 0, 'win_rate': 0, 'bankroll': self.bankroll}
+        
+        wins = sum(1 for trade in self.trades if trade['result'] == 'WIN')
+        total = len(self.trades)
+        win_rate = (wins / total) * 100
+        
+        return {
+            'total_trades': total,
+            'winning_trades': wins,
+            'win_rate': round(win_rate, 1),
+            'bankroll': round(self.bankroll, 2)
+        }
 
 # Instance globale
 bot = GPTBetFoot()
@@ -176,14 +203,21 @@ def analyze():
 def get_trades():
     return jsonify(bot.trades)
 
+@app.route('/performance')
+def get_performance():
+    return jsonify(bot.get_performance())
+
 @app.route('/health')
 def health():
     return jsonify({
         'status': 'healthy', 
         'service': 'GPT-Bet.Foot',
-        'trades_count': len(bot.trades),
-        'bankroll': bot.bankroll
+        'timestamp': datetime.now().isoformat()
     })
+
+@app.route('/test')
+def test():
+    return jsonify({'message': 'GPT-Bet.Foot API is working!'})
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
